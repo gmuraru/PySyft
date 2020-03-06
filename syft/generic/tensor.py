@@ -6,7 +6,11 @@ import syft as sy
 from syft.generic.object import _apply_args
 from syft.generic.object import AbstractObject
 from syft.generic.object import initialize_object
+from syft.generic.frameworks.overload import overloaded
 
+from syft.generic.frameworks.hook.trace import tracer
+import crypten
+import torch as th
 
 class AbstractTensor(AbstractObject):
     def __init__(
@@ -18,6 +22,16 @@ class AbstractTensor(AbstractObject):
         child=None,
     ):
         super(AbstractTensor, self).__init__(id, owner, tags, description, child)
+
+
+    def get_plain_text(self):
+
+        @tracer(func_name="crypten.mpc.MPCTensor.get_plain_text")
+        @functools.wraps(crypten.mpc.MPCTensor.get_plain_text)
+        def overloaded_func(*args, **kwargs):
+            return th.randint(0, 10, self.shape)
+
+        return overloaded_func()
 
     def wrap(self, register=True, type=None, **kwargs):
         """Wraps the class inside an empty object of class `type`.
