@@ -186,6 +186,7 @@ class BaseWorker(AbstractWorker, ObjectStorage):
                 self.remote = Remote(self, "tensorflow")
 
         self.rank_to_worker_id = None
+
     # SECTION: Methods which MUST be overridden by subclasses
     @abstractmethod
     def _send_msg(self, message: bin, location: "BaseWorker"):
@@ -437,7 +438,6 @@ class BaseWorker(AbstractWorker, ObjectStorage):
             An ObjectMessage containing the return value of the crypten function computed.
         """
 
-
         self.rank_to_worker_id, world_size, master_addr, master_port = message.crypten_context
 
         plans = self.search("crypten_plan")
@@ -455,8 +455,6 @@ class BaseWorker(AbstractWorker, ObjectStorage):
 
         return_value = run_party(plan, rank, world_size, master_addr, master_port, (), {})
         return ObjectMessage(return_value)
-
-
 
     def handle_object_msg(self, obj_msg: ObjectMessage):
         # This should be a good seam for separating Workers from ObjectStorage (someday),
