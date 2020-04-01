@@ -21,6 +21,11 @@ from syft.workers.abstract import AbstractWorker
 
 from syft_proto.execution.v1.role_pb2 import Role as RolePB
 
+from syft import dependency_check
+
+if dependency_check.crypten_available:
+    import crypten
+
 
 class Role(AbstractObject, ObjectStorage):
     """

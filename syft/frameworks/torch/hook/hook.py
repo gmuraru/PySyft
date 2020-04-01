@@ -38,7 +38,6 @@ from syft.exceptions import route_method_exception
 
 if dependency_check.crypten_available:
     import crypten
-    from syft.frameworks.torch.tensors.crypten.syft_crypten import SyftCrypTensor
 
 
 class TorchHook(FrameworkHook):
@@ -136,11 +135,15 @@ class TorchHook(FrameworkHook):
         else:
             self.local_worker.hook = self
 
-        self.to_auto_overload = {}
+        import crypten
+        self.to_auto_overload = {
+            crypten.mpc.MPCTensor: ["add", "__add__", "get_plain_text"]
+        }
 
         self.args_hook_for_overloaded_attr = {}
 
         self._hook_native_tensor(torch.Tensor, TorchTensor)
+        self._hook_native_tensor(crypten.mpc.MPCTensor, TorchTensor)
 
         # Add all hooked tensor methods to pointer but change behaviour to have the cmd sent
         self._hook_pointer_tensor_methods(self.torch.Tensor)
@@ -167,12 +170,6 @@ class TorchHook(FrameworkHook):
         # SyftTensor class file)
         self._hook_syft_tensor_methods(FixedPrecisionTensor)
 
-        # Add all hooked tensor methods to SyftCrypTensor tensor but change behaviour
-        # to just forward the cmd to the next child (behaviour can be changed in the
-        # SyftTensor class file)
-        if dependency_check.crypten_available:
-            self._hook_syft_tensor_methods(SyftCrypTensor)
-
         # Add all hooked tensor methods to AutogradTensor tensor but change behaviour
         # to just forward the cmd to the next child (behaviour can be changed in the
         # SyftTensor class file)
@@ -187,6 +184,11 @@ class TorchHook(FrameworkHook):
         # to just forward the cmd to the next child (behaviour can be changed in the
         # SyftTensor class file)
         self._hook_syft_placeholder_methods(self.torch.Tensor, PlaceHolder)
+
+        # Add all hooked tensor methods to PlaceHolder tensor but change behaviour
+        # to just forward the cmd to the next child (behaviour can be changed in the
+        # SyftTensor class file)
+        self._hook_syft_placeholder_methods(crypten.mpc.MPCTensor, PlaceHolder)
 
         # Add all hooked tensor methods to AdditiveSharingTensor tensor but change behaviour
         # to just forward the cmd to the next child (behaviour can be changed in the
@@ -485,16 +487,20 @@ class TorchHook(FrameworkHook):
 
                 self._perform_function_overloading(module_name, torch_module, func)
 
+    # TODO This can be wrapped in a different hook and use auto_overload to do the same
+    # thing with the crypten tensor
     def _hook_crypten(self):
         from syft.frameworks.crypten import load as crypten_load
         from syft.frameworks.crypten.hook.hook import get_hooked_crypten_func
         from crypten.mpc import MPCTensor
+
 
         native_func = getattr(crypten, "load")
         setattr(crypten, "native_load", native_func)  # Currenty we do nothing with the native load
 
         new_func = get_hooked_crypten_func("load", crypten_load)
         setattr(crypten, "load", new_func)
+
 
     def _get_hooked_additive_shared_method(hook_self, attr):
         """

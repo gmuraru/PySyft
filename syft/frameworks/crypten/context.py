@@ -102,7 +102,10 @@ def run_multiworkers(workers: list, master_addr: str, master_port: int = 15449):
             world_size = len(workers) + 1
             return_values = {rank: None for rank in range(world_size)}
 
+            # Do this such that we can use the tracer
+            crypten.init()
             plan.build()
+            crypten.uninit()
 
             # Mark the plan so the other workers will use that tag to retrieve the plan
             plan.tags = ["crypten_plan"]
