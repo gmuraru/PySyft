@@ -6,11 +6,13 @@ from typing import Union
 import torch
 
 import syft as sy
+from syft import dependency_check
 from syft.execution.computation import ComputationAction
 from syft.execution.placeholder import PlaceHolder
 from syft.execution.role import Role
 from syft.execution.state import State
 from syft.generic.frameworks.types import FrameworkTensor
+from syft.generic.tensor import AbstractTensor
 from syft.generic.frameworks.types import FrameworkLayerModule
 from syft.generic.object import AbstractObject
 from syft.generic.pointers.pointer_plan import PointerPlan
@@ -182,13 +184,13 @@ class Plan(AbstractObject):
                 results = self.forward(*args)
 
         # Register inputs in role
-        self.role.register_computation_inputs(args)
+        self.role.register_inputs(args)
 
         # Register outputs in role
-        self.role.register_computation_outputs(results)
+        self.role.register_outputs(results)
 
         for log in sy.hook.trace.logs:
-            self.role.register_computation_action(log)
+            self.role.register_action(log, ComputationAction)
 
         sy.hook.trace.clear()
         self.is_built = True
@@ -216,7 +218,7 @@ class Plan(AbstractObject):
         object.__setattr__(self, name, value)
 
         if isinstance(value, FrameworkTensor):
-            self.role.add_tensor_to_state(value)
+            self.role.register_state_tensor(value)
         elif isinstance(value, FrameworkLayerModule):
             for tensor_name, tensor in value.named_tensors():
                 self.__setattr__(f"{name}_{tensor_name}", tensor)
@@ -237,12 +239,10 @@ class Plan(AbstractObject):
             if self.include_state:
                 args = (*args, self.state)
             return self.forward(*args)
-
         elif not self.is_built:
             return self.build(args)
-
         else:
-            return self.role.execute_computation(args)
+            return self.role.execute(args)
 
     def run(self, args: Tuple, result_ids: List[Union[str, int]]):
         """Controls local or remote plan execution.

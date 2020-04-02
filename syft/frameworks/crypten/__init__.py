@@ -1,6 +1,7 @@
 import crypten
 import crypten.communicator as comm
-from syft.frameworks.crypten.context import toy_func, run_party
+import syft
+from syft.frameworks.crypten.context import run_party
 
 
 def load(tag: str, src: int = 0, **kwargs):
@@ -27,4 +28,4 @@ def load(tag: str, src: int = 0, **kwargs):
     return result
 
 
-__all__ = ["toy_func", "run_party"]
+__all__ = ["run_party", "load", "get_plain_text"]

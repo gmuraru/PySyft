@@ -25,15 +25,15 @@ logger = logging.getLogger(__name__)
 # Tensorflow / Keras dependencies
 # Import Hooks
 
+__all__ = []
 if dependency_check.tfe_available:
     from syft.frameworks.keras import KerasHook
     from syft.workers.tfe import TFECluster
     from syft.workers.tfe import TFEWorker
 
-    __all__ = ["KerasHook", "TFECluster", "TFEWorker"]
+    __all__.extend(["KerasHook", "TFECluster", "TFEWorker"])
 else:
     logger.info("TF Encrypted Keras not available.")
-    __all__ = []
 
 # Pytorch dependencies
 # Import Hook
@@ -113,6 +113,7 @@ __all__.extend(
         "AutogradTensor",
         "FixedPrecisionTensor",
         "LargePrecisionTensor",
+        "SyftCrypTensor",
         "PointerTensor",
         "MultiPointerTensor",
         "PrivateGridNetwork",
