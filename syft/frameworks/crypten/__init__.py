@@ -14,7 +14,6 @@ def load(tag: str, src: int = 0, **kwargs):
     """
 
     if src == comm.get().get_rank():
-    if src == comm.get().get_rank():
         worker = syft.local_worker.get_worker_from_rank(src)
         results = worker.search(tag)
 
