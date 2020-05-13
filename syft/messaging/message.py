@@ -14,6 +14,7 @@ from typing import List
 
 import syft as sy
 from syft.workers.abstract import AbstractWorker
+from syft.serde.syft_serializable import SyftSerializable
 
 from syft.execution.action import Action
 from syft.execution.computation import ComputationAction
@@ -24,7 +25,7 @@ from syft_proto.messaging.v1.message_pb2 import ObjectMessage as ObjectMessagePB
 from syft_proto.messaging.v1.message_pb2 import TensorCommandMessage as CommandMessagePB
 
 
-class Message(ABC):
+class Message(ABC, SyftSerializable):
     """All syft message types extend this class
 
     All messages in the pysyft protocol extend this class. This abstraction
@@ -56,7 +57,7 @@ class TensorCommandMessage(Message):
     """All syft actions use this message type
 
     In Syft, an action is when one worker wishes to tell another worker to do something with
-    objects contained in the worker._objects registry (or whatever the official object store is
+    objects contained in the worker.object_store registry (or whatever the official object store is
     backed with in the case that it's been overridden). Semantically, one could view all Messages
     as a kind of action, but when we say action this is what we mean. For example, telling a
     worker to take two tensors and add them together is an action. However, sending an object
@@ -98,24 +99,28 @@ class TensorCommandMessage(Message):
     def return_ids(self):
         return self.action.return_ids
 
+    @property
+    def return_value(self):
+        return self.action.return_value
+
     def __str__(self):
         """Return a human readable version of this message"""
         return f"({type(self).__name__} {self.action})"
 
     @staticmethod
-    def computation(name, target, args_, kwargs_, return_ids):
+    def computation(name, target, args_, kwargs_, return_ids, return_value=False):
         """ Helper function to build a TensorCommandMessage containing a ComputationAction
         directly from the action arguments.
         """
-        action = ComputationAction(name, target, args_, kwargs_, return_ids)
+        action = ComputationAction(name, target, args_, kwargs_, return_ids, return_value)
         return TensorCommandMessage(action)
 
     @staticmethod
-    def communication(obj_id, source, destinations, kwargs):
+    def communication(name, target, args_, kwargs_, return_ids):
         """ Helper function to build a TensorCommandMessage containing a CommunicationAction
         directly from the action arguments.
         """
-        action = CommunicationAction(obj_id, source, destinations, kwargs)
+        action = CommunicationAction(name, target, args_, kwargs_, return_ids)
         return TensorCommandMessage(action)
 
     @staticmethod
@@ -201,6 +206,10 @@ class TensorCommandMessage(Message):
         detailed_action = sy.serde.protobuf.serde._unbufferize(worker, action)
         return TensorCommandMessage(detailed_action)
 
+    @staticmethod
+    def get_protobuf_schema() -> CommandMessagePB:
+        return CommandMessagePB
+
 
 class ObjectMessage(Message):
     """Send an object to another worker using this message type.
@@ -275,6 +284,10 @@ class ObjectMessage(Message):
         object_msg = ObjectMessage(object_)
 
         return object_msg
+
+    @staticmethod
+    def get_protobuf_schema() -> ObjectMessagePB:
+        return ObjectMessagePB
 
 
 class ObjectRequestMessage(Message):
@@ -636,11 +649,6 @@ class WorkerCommandMessage(Message):
         """Return a human readable version of this message"""
         return f"({type(self).__name__} {(self.command_name, self.message)})"
 
-    @property
-    def contents(self):
-        """Returns a tuple with the contents of the operation (backwards compatability)."""
-        return (self.command_name, self.message)
-
     @staticmethod
     def simplify(worker: AbstractWorker, ptr: "WorkerCommandMessage") -> tuple:
         """
@@ -676,3 +684,111 @@ class WorkerCommandMessage(Message):
             sy.serde.msgpack.serde._detail(worker, command_name),
             sy.serde.msgpack.serde._detail(worker, message),
         )
+
+
+class CryptenInitPlan(Message):
+    """Initialize a Crypten party using this message.
+
+    Crypten uses processes as parties, those processes need to be initialized with information
+    so they can communicate and exchange tensors and shares while doing computation. This message
+    allows the exchange of information such as the ip and port of the master party to connect to,
+    as well as the rank of the party to run and the number of parties involved."""
+
+    def __init__(self, crypten_context):
+        self.crypten_context = crypten_context
+
+    def __str__(self):
+        """Return a human readable version of this message"""
+        return f"({type(self).__name__} {self.crypten_context})"
+
+    @staticmethod
+    def simplify(worker: AbstractWorker, message: "CryptenInitPlan") -> tuple:
+        """
+        This function takes the attributes of a CryptenInitPlan and saves them in a tuple
+
+        Args:
+            worker (AbstractWorker): a reference to the worker doing the serialization
+            ptr (CryptenInitPlan): a Message
+
+        Returns:
+            tuple: a tuple holding the unique attributes of the message
+        """
+        return (sy.serde.msgpack.serde._simplify(worker, message.crypten_context),)
+
+    @staticmethod
+    def detail(worker: AbstractWorker, msg_tuple: tuple) -> "CryptenInitPlan":
+        """
+        This function takes the simplified tuple version of this message and converts
+        it into a CryptenInitPlan. The simplify() method runs the inverse of this method.
+
+        Args:
+            worker (AbstractWorker): a reference to the worker necessary for detailing. Read
+                syft/serde/serde.py for more information on why this is necessary.
+            msg_tuple (Tuple): the raw information being detailed.
+
+        Returns:
+            CryptenInitPlan message.
+
+        Examples:
+            message = detail(sy.local_worker, msg_tuple)
+        """
+        return CryptenInitPlan(sy.serde.msgpack.serde._detail(worker, msg_tuple[0]))
+
+
+class CryptenInitJail(Message):
+    """Initialize a Crypten party using this message.
+
+    Crypten uses processes as parties, those processes need to be initialized with information
+    so they can communicate and exchange tensors and shares while doing computation. This message
+    allows the exchange of information such as the ip and port of the master party to connect to,
+    as well as the rank of the party to run and the number of parties involved. Compared to
+    CryptenInitPlan, this message also sends two extra fields, a JailRunner and a Crypten model."""
+
+    def __init__(self, crypten_context, jail_runner, model=None):
+        # crypten_context = (rank_to_worker_ids, world_size, master_addr, master_port)
+        self.crypten_context = crypten_context
+        self.jail_runner = jail_runner
+        self.model = model
+
+    def __str__(self):
+        """Return a human readable version of this message"""
+        return f"({type(self).__name__} {self.crypten_context}, {self.jail_runner})"
+
+    @staticmethod
+    def simplify(worker: AbstractWorker, message: "CryptenInitJail") -> tuple:
+        """
+        This function takes the attributes of a CryptenInitJail and saves them in a tuple
+
+        Args:
+            worker (AbstractWorker): a reference to the worker doing the serialization
+            ptr (CryptenInitJail): a Message
+
+        Returns:
+            tuple: a tuple holding the unique attributes of the message
+        """
+        return (
+            sy.serde.msgpack.serde._simplify(
+                worker, (*message.crypten_context, message.jail_runner, message.model)
+            ),
+        )
+
+    @staticmethod
+    def detail(worker: AbstractWorker, msg_tuple: tuple) -> "CryptenInitJail":
+        """
+        This function takes the simplified tuple version of this message and converts
+        it into a CryptenInitJail. The simplify() method runs the inverse of this method.
+
+        Args:
+            worker (AbstractWorker): a reference to the worker necessary for detailing. Read
+                syft/serde/serde.py for more information on why this is necessary.
+            msg_tuple (Tuple): the raw information being detailed.
+
+        Returns:
+            CryptenInitJail message.
+
+        Examples:
+            message = detail(sy.local_worker, msg_tuple)
+        """
+        msg_tuple = sy.serde.msgpack.serde._detail(worker, msg_tuple[0])
+        *context, jail_runner, model = msg_tuple
+        return CryptenInitJail(tuple(context), jail_runner, model)
