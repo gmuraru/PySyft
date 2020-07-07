@@ -1,6 +1,5 @@
 import syft as sy
 import torch
-import pytest
 
 from syft.execution.placeholder import PlaceHolder
 
@@ -16,7 +15,7 @@ def test_placeholder_expected_shape():
 
 def test_create_from():
     t = torch.tensor([1, 2, 3])
-    ph = PlaceHolder.create_from(t, owner=sy.local_worker)
+    ph = PlaceHolder.create_from(t)
 
     assert isinstance(ph, PlaceHolder)
     assert (ph.child == torch.tensor([1, 2, 3])).all()

@@ -17,7 +17,7 @@ def test_simple_func():
 
 
 def import_socket():  # pragma: no cover
-    import socket
+    import socket  # noqa: F401
 
 
 def test_import():
@@ -34,3 +34,31 @@ def test_ser_deser():
     t = th.tensor(2)
     expected = th.tensor(7)
     assert expected == func_deser(t)
+
+
+def test_empty_jail():
+    with pytest.raises(ValueError) as e:
+        empty_jail = jail.JailRunner()
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        """
+s = "not a function"
+print(s)
+        """,
+        """
+s = "not a function"
+        """,
+    ],
+)
+def test_not_valid_func(src):
+    with pytest.raises(ValueError):
+        not_valid = jail.JailRunner(func_src=src)
+
+
+def test_already_built():
+    func = jail.JailRunner(func=add_tensors)
+    with pytest.raises(RuntimeWarning):
+        func._build()

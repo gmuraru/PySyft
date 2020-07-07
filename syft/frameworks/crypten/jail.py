@@ -9,7 +9,6 @@ from RestrictedPython.Eval import default_guarded_getiter, default_guarded_getit
 from RestrictedPython.Guards import (
     guarded_iter_unpack_sequence,
     guarded_unpack_sequence,
-    guarded_setattr,
 )
 from RestrictedPython.PrintCollector import PrintCollector
 
@@ -50,6 +49,16 @@ class JailRunner:
         if rm_decorators:
             # Remove decorator if any
             func_src = re.sub(r"@[^\(]+\([^\)]*\)", "", func_src)
+
+        # remove base indent
+        lines = func_src.split("\n")
+        if len(lines) and re.match(r"^ *", lines[0]):
+            base_re = "^" + re.match(r"^ *", lines[0]).group(0)
+            new_lines = []
+            for l in lines:
+                l = re.sub(base_re, "", l)
+                new_lines.append(l)
+            func_src = "\n".join(new_lines)
 
         is_func, self._func_name = JailRunner._check_func_def(func_src)
         if not is_func:
