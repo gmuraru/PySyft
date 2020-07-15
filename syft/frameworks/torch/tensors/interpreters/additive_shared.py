@@ -58,7 +58,12 @@ class AdditiveSharingTensor(AbstractTensor):
 
         self.child = shares
         self.dtype = dtype
-        if dtype == "custom":
+        if dtype is None and field is None:
+            # Default args
+            self.dtype = "long"
+            self.field = 2 ** 64
+            self.torch_dtype = torch.int64
+        elif dtype == "custom":
             if field is None:
                 raise ValueError("Field cannot be None for custom dtype")
             self.field = field
@@ -87,7 +92,7 @@ class AdditiveSharingTensor(AbstractTensor):
                     self.field = 2 ** 64
                     self.torch_dtype = torch.int64
             else:
-                warnings.warn("Default args selected")
+                warnings.warn("Invalid field and no dtype: default args selected")
                 # Default args
                 self.dtype = "long"
                 self.field = 2 ** 64
@@ -155,6 +160,13 @@ class AdditiveSharingTensor(AbstractTensor):
         for share in self.child.values():
             return share.shape
 
+    def numel(self):
+        """
+        Return the number of elements
+        """
+        for share in self.child.values():
+            return share.numel()
+
     @property
     def min_value(self):
         if self._min_value is None:
@@ -221,10 +233,10 @@ class AdditiveSharingTensor(AbstractTensor):
             mask_pos = x > self.max_value
             mask_neg = x < self.min_value
             if mask_pos.any():
-                mask_pos = mask_pos.long()
+                mask_pos = mask_pos.type(self.torch_dtype)
                 return self.modulo(x - (mask_pos * self.field))
             elif mask_neg.any():
-                mask_neg = mask_neg.long()
+                mask_neg = mask_neg.type(self.torch_dtype)
                 return self.modulo(x + (mask_neg * self.field))
             else:
                 return x.type(self.torch_dtype)
@@ -720,6 +732,18 @@ class AdditiveSharingTensor(AbstractTensor):
 
         return results
 
+    @overloaded.method
+    def mean(self, shares, **kwargs):
+        result = {}
+        m = None
+        for worker, share in shares.items():
+            sum_value = share.sum(**kwargs)
+            if m is None:
+                m = share.numel() // sum_value.numel()
+            result[worker] = sum_value / m
+
+        return result
+
     @staticmethod
     @overloaded.module
     def torch(module):
@@ -903,9 +927,14 @@ class AdditiveSharingTensor(AbstractTensor):
         module.nn = nn
 
     ## SECTION SNN
-
+    @crypto_protocol("snn")
     def relu(self, inplace=False):
         return securenn.relu(self)
+
+    @crypto_protocol("fss")
+    def relu(self):
+        zero = self - self
+        return self * (self >= zero)
 
     def positive(self):
         # self >= 0
@@ -932,7 +961,7 @@ class AdditiveSharingTensor(AbstractTensor):
 
     @crypto_protocol("fss")
     def __ge__(self, other):
-        return other <= self
+        return fss.le(other, self)
 
     def lt(self, other):
         return (other - self - 1).positive()
@@ -1053,29 +1082,31 @@ class AdditiveSharingTensor(AbstractTensor):
         handle_function_command of the type of the child attributes, get the
         response and replace a Syft Tensor on top of all tensors found in
         the response.
-
         Args:
             command: instruction of a function command: (command name,
             <no self>, arguments[, kwargs_])
-
         Returns:
             the response of the function command
         """
-        cmd, _, args_, kwargs_ = command
+        cmd_name, _, args_, kwargs_ = command
 
         # Check that the function has not been overwritten
+        cmd = None
         try:
             # Try to get recursively the attributes in cmd = "<attr1>.<attr2>.<attr3>..."
-            cmd = cls.rgetattr(cls, cmd)
+            cmd = cls.rgetattr(cls, cmd_name)
         except AttributeError:
             pass
-        if not isinstance(cmd, str):
+
+        if cmd is not None:
             return cmd(*args_, **kwargs_)
 
         tensor = args_[0] if not isinstance(args_[0], (tuple, list)) else args_[0][0]
 
         # Replace all SyftTensors with their child attribute
-        new_args, new_kwargs, new_type = hook_args.unwrap_args_from_function(cmd, args_, kwargs_)
+        new_args, new_kwargs, new_type = hook_args.unwrap_args_from_function(
+            cmd_name, args_, kwargs_
+        )
 
         results = {}
         for worker, share in new_args[0].items():
@@ -1083,14 +1114,14 @@ class AdditiveSharingTensor(AbstractTensor):
             new_args_worker = tuple(AdditiveSharingTensor.select_worker(new_args, worker))
 
             # build the new command
-            new_command = (cmd, None, new_args_worker, new_kwargs)
+            new_command = (cmd_name, None, new_args_worker, new_kwargs)
 
             # Send it to the appropriate class and get the response
             results[worker] = new_type.handle_func_command(new_command)
 
         # Put back AdditiveSharingTensor on the tensors found in the response
         response = hook_args.hook_response(
-            cmd, results, wrap_type=cls, wrap_args=tensor.get_class_attributes()
+            cmd_name, results, wrap_type=cls, wrap_args=tensor.get_class_attributes()
         )
 
         return response
