@@ -18,8 +18,9 @@ class Attribute:
         "attrs",
         "return_type_name",
         "client",
-        "lookup_cache",
     ]
+
+    lookup_cache: Dict[Any, Any] = {}
 
     def __init__(
         self,
@@ -35,7 +36,6 @@ class Attribute:
 
         self.return_type_name = return_type_name
         self.client = client
-        self.lookup_cache: Dict[Any, Any] = {}
 
     def __call__(
         self,
