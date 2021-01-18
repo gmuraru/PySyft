@@ -5,6 +5,7 @@ from typing import Callable as CallableT
 from typing import List
 from typing import Optional
 from typing import Union
+from typing import Dict
 
 # syft relative
 from .. import ast
@@ -57,6 +58,8 @@ class Module(ast.attribute.Attribute):
             client=client,
         )
 
+        self.lookup_cache: Dict[Any, Any] = {}
+
     def add_attr(
         self,
         attr_name: str,
@@ -71,13 +74,24 @@ class Module(ast.attribute.Attribute):
         if attr is None:
             raise ValueError("MAKE PROPER ERROR SCHEMA")
 
+        # if add_attr is called directly we need to cache the path as well
+        attr_ref = getattr(attr, "object_ref", None)
+        path = getattr(attr, "path_and_name", None)
+        if attr_ref not in self.lookup_cache and path is not None:
+            self.lookup_cache[attr_ref] = path
+
         self.attrs[attr_name] = attr
 
     def __call__(
         self,
         path: Optional[List[str]] = None,
         index: int = 0,
+        obj_type: Optional[type] = None,
     ) -> Optional[Union[Callable, CallableT]]:
+
+        if obj_type is not None:
+            if obj_type in self.lookup_cache:
+                path = self.lookup_cache[obj_type]
 
         _path: List[str] = (
             path.split(".") if isinstance(path, str) else path if path else []
@@ -87,6 +101,7 @@ class Module(ast.attribute.Attribute):
             path=_path,
             index=index + 1,
         )
+
         return resolved
 
     def __repr__(self) -> str:
@@ -165,6 +180,10 @@ class Module(ast.attribute.Attribute):
                 return
 
         attr = self.attrs[path[index]]
+        attr_ref = getattr(self.object_ref, path[index], None)
+        if attr_ref is not None and attr_ref not in self.lookup_cache:
+            self.lookup_cache[attr_ref] = path
+
         attr.add_path(path=path, index=index + 1, return_type_name=return_type_name)
 
     def __getattribute__(self, item):

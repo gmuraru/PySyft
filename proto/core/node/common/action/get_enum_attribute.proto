@@ -6,7 +6,7 @@ import "proto/core/common/common_object.proto";
 import "proto/core/io/address.proto";
 import "proto/core/pointer/pointer.proto";
 
-message EnumAttributeAction {
+message GetEnumAttributeAction {
   string path = 1;
   syft.core.common.UID id_at_location = 2;
   syft.core.io.Address address = 3;

@@ -1,12 +1,10 @@
 # stdlib
 from typing import Callable as CallableT
-from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Union
 
 # syft relative
-from ..core.common.uid import UID
 from .callable import Callable
 from .module import Module
 

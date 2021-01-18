@@ -1,5 +1,4 @@
 # stdlib
-from abc import ABC
 from typing import Any
 from typing import Callable as CallableT
 from typing import Dict
@@ -88,7 +87,13 @@ class Attribute:
         self._extract_attr_type(out, "properties")
         return out
 
-    def query(self, path: Union[List[str], str]) -> "Attribute":
+    def query(
+        self, path: Union[List[str], str], obj_type: Optional[type] = None
+    ) -> "Attribute":
+        if obj_type is not None:
+            if obj_type in self.lookup_cache:
+                path = self.lookup_cache[obj_type]
+
         _path: List[str] = path if isinstance(path, list) else path.split(".")
 
         if len(_path) == 0:
