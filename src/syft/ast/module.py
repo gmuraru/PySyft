@@ -44,6 +44,8 @@ class Module(ast.attribute.Attribute):
 
     """A module which contains other modules or callables."""
 
+    lookup_cache: Dict[Any, Any] = {}
+
     def __init__(
         self,
         client: Optional[Any],
@@ -57,8 +59,6 @@ class Module(ast.attribute.Attribute):
             return_type_name=return_type_name,
             client=client,
         )
-
-        self.lookup_cache: Dict[Any, Any] = {}
 
     def add_attr(
         self,

@@ -89,11 +89,7 @@ def create_lib_ast(client: Optional[Any] = None) -> Globals:
 
     lib_ast = Globals(client=client)
     lib_ast.add_attr(attr_name="syft", attr=python_ast.attrs["syft"])
-
-    torch_ast = create_torch_ast()
     lib_ast.add_attr(attr_name="torch", attr=torch_ast.attrs["torch"])
-
-    torchvision_ast = create_torchvision_ast()
     lib_ast.add_attr(attr_name="torchvision", attr=torchvision_ast.attrs["torchvision"])
 
     for elem_name, callback in registered_callbacks.items():
