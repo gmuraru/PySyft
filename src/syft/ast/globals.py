@@ -27,6 +27,7 @@ class Globals(Module):
         return self.attrs[_path[index]](
             path=_path,
             index=index + 1,
+            obj_type=obj_type
         )
 
     def add_path(
