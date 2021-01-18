@@ -15,12 +15,12 @@ def create_AST(client):
 
     methods = [
         ("test_module.A", "test_module.A"),
-        # ("test_module.A.test_method", "syft.lib.python.Int"),
+        ("test_module.A.test_method", "syft.lib.python.Int"),
         ("test_module.A.test_property", "syft.lib.python.Float"),
-        # ("test_module.A._private_attr", "syft.lib.python.Float"),
-        # ("test_module.A.static_method", "syft.lib.python.Float"),
+        ("test_module.A._private_attr", "syft.lib.python.Float"),
+        ("test_module.A.static_method", "syft.lib.python.Float"),
         ("test_module.A.static_attr", "syft.lib.python.Int"),
-        # ("test_module.B.Car", "test_module.B"),
+        ("test_module.B.Car", "test_module.B"),
         # ("test_module.global_value", "syft.lib.python.Int"),
         # ("test_module.global_function", "syft.lib.python.Int"),
     ]
@@ -114,7 +114,7 @@ def test_slot_set():
 def test_global_function():
     client = get_custom_client()
 
-    globals = client.test_module.globals()
+    globals = client.test_module.globals
     result_ptr = globals.global_function()
     result = test_module.global_function()
 
@@ -124,9 +124,7 @@ def test_global_function():
 def test_global_attribute_get():
     client = get_custom_client()
 
-    globals = client.test_module.globals()
-    result_ptr = globals.global_value
-
+    result_ptr = client.test_module.global_value
     result = test_module.global_value
 
     assert result == result_ptr.get()
@@ -135,8 +133,7 @@ def test_global_attribute_get():
 def test_global_attribute_set():
     client = get_custom_client()
 
-    globals = client.test_module.globals()
-    result_ptr = globals.global_value
+    result_ptr = client.test_module.globals.global_value
     result = test_module.global_value
 
     assert result == result_ptr.get()
@@ -149,8 +146,6 @@ def test_static_method():
     result = test_module.A.static_method()
     assert result == result_ptr.get()
 
-
-test_static_method()
 
 
 def test_static_attribute_get():

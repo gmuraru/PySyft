@@ -154,24 +154,27 @@ class Module(ast.attribute.Attribute):
                     ),
                 )
             elif index == len(path) - 1:
-                if "globals" not in self.attrs:
-                    # syft absolute
-                    from syft.lib.misc.scope import Scope
-
-                    scope, scope_name = Scope.from_qualname(
-                        ".".join(path[:-1]), self.object_ref
-                    )
-                    path.insert(len(path) - 1, "globals")
-
-                    self.add_attr(
-                        attr_name="globals",
-                        attr=ast.klass.Class(
-                            path_and_name=".".join(path[: index + 1]),
-                            object_ref=scope,
-                            return_type_name=scope_name,
-                            client=self.client,
-                        ),
-                    )
+                static_attribute = ast.static_attr.StaticAttribute(
+                    path_and_name=".".join(path[: index + 1]),
+                    return_type_name=return_type_name,
+                    client=self.client,
+                    parent=self,
+                )
+                setattr(self, path[index], static_attribute)
+                self.attrs[path[index]] = static_attribute
+                return
 
         attr = self.attrs[path[index]]
         attr.add_path(path=path, index=index + 1, return_type_name=return_type_name)
+
+    def __getattribute__(self, item):
+
+        try:
+            target_object = super().__getattribute__(item)
+            if isinstance(target_object, ast.static_attr.StaticAttribute):
+                return target_object.get_remote_value()
+            return target_object
+        except Exception as e:
+            print("IN CRUCEA MATII")
+            print(e)
+            raise e

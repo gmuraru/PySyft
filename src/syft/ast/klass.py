@@ -405,7 +405,9 @@ class Class(Callable):
                 return target_object.get_remote_value()
 
             if isinstance(target_object, ast.enum.EnumAttribute):
-                return target_object.get_remote_enum_attribute()
+                target_object_ptr = target_object.get_remote_enum_attribute()
+                target_object_ptr.is_enum = True
+                return target_object_ptr
 
             return target_object
         except Exception as e:

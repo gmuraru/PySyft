@@ -150,6 +150,8 @@ class Pointer(AbstractPointer):
         self.description = description
         self.gc_enabled = True
 
+        self.is_enum = False
+
     def _get(self, delete_obj: bool = True, verbose: bool = False) -> StorableObject:
         """Method to download a remote object from a pointer object if you have the right
         permissions.
@@ -177,6 +179,10 @@ class Pointer(AbstractPointer):
             # for ProtobufWrapper's we want to actually vend the real Proto since
             # that is what was originally sent in with .send
             return obj.data
+
+        if self.is_enum:
+            enum_class = self.client.lib_ast.query(self.path_and_name).object_ref
+            return enum_class(obj)
 
         return obj
 
