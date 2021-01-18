@@ -6,7 +6,6 @@ from typing import Union
 from ..misc.union import UnionGenerator
 
 allowlist: Dict[str, Union[str, Dict[str, str]]] = {}  # (path: str, return_type:type)
-fallback: Dict[str, str] = {}
 
 # --------------------------------------------------------------------------------------
 # SECTION - Tensor methods which are intentionally disabled
@@ -1709,8 +1708,6 @@ allowlist[
 allowlist["torch.nn.Module.extra_repr"] = "syft.lib.python.String"
 
 allowlist["torch.nn.Conv2d"] = "torch.nn.Conv2d"
-fallback["torch.nn.modules.conv.Conv2d"] = "torch.nn.Conv2d"
-
 allowlist["torch.nn.Conv2d.__call__"] = "torch.Tensor"
 allowlist["torch.nn.Conv2d.parameters"] = "syft.lib.python.List"
 allowlist["torch.nn.Conv2d.train"] = "torch.nn.Conv2d"

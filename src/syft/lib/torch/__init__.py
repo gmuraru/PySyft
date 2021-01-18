@@ -11,7 +11,6 @@ from . import parameter  # noqa: 401
 from . import uppercase_tensor  # noqa: 401
 from ...ast.globals import Globals
 from .allowlist import allowlist
-from .allowlist import fallback
 
 TORCH_VERSION = version.parse(torch.__version__.split("+")[0])
 
@@ -65,19 +64,6 @@ def create_torch_ast(client=None) -> Globals:
             pass
             # TODO: Replace with logging
             # print(f"Skipping {method} not supported in {TORCH_VERSION}")
-
-    for method, location in fallback.items():
-        target_node = ast.query(location)
-        prefix_path = ".".join(method.split(".")[:-1])
-        name = method.split(".")[-1]
-
-        ast.add_path(
-            path=prefix_path,
-            framework_reference=torch,
-        )
-
-        end_node = ast.query(prefix_path)
-        end_node.attrs[name] = target_node
 
     for klass in ast.classes:
         klass.create_pointer_class()

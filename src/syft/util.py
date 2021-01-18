@@ -142,7 +142,7 @@ def obj2pointer_type(obj: object) -> type:
         fqn = fqn.replace("ProtobufWrapper", "")
 
     try:
-        ref = syft.lib_ast.query(fqn)
+        ref = syft.lib_ast.query(fqn, return_callable=True, obj_type=type(obj))
     except Exception as e:
         log = f"Cannot find {type(obj)} {fqn} in lib_ast. {e}"
         logger.critical(log)
