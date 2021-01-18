@@ -5,7 +5,7 @@ set -e
 pids=()
 
 # start tests in parallel (with additional parallelism)
-pytest -m fast -n auto & pids+=($!)
+# pytest -m fast -n auto & pids+=($!)
 
 # check bandit in parallel
 bandit -r src -ll & pids+=($!)

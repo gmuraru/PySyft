@@ -8,6 +8,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
+from types import ModuleType
 
 # third party
 from google.protobuf.message import Message
@@ -84,7 +85,7 @@ def get_run_class_method(attr_path_and_name: str) -> CallableT:
 def generate_class_property_function(
     attr_path_and_name: str, action: PropertyActions
 ) -> CallableT:
-    def class_property_function(__self: Any, *args, **kwargs):
+    def class_property_function(__self: Any, *args: Any, **kwargs: Any) -> CallableT:
         # we want to get the return type which matches the attr_path_and_name
         # so we ask lib_ast for the return type name that matches out
         # attr_path_and_name and then use that to get the actual pointer klass
@@ -137,7 +138,7 @@ def _set_request_config(self: Any, request_config: Dict[str, Any]) -> None:
     setattr(self, "get_request_config", lambda: request_config)
 
 
-def wrap_iterator(attrs: Dict[str, Union[str, CallableT]]) -> None:
+def wrap_iterator(attrs: Dict[str, Union[str, CallableT, property]]) -> None:
     def wrap_iter(iter_func: CallableT) -> CallableT:
         def __iter__(self: Any) -> Iterable:
             # syft absolute
@@ -166,7 +167,7 @@ def wrap_iterator(attrs: Dict[str, Union[str, CallableT]]) -> None:
     attrs[attr_name] = wrap_iter(iter_func)
 
 
-def wrap_len(attrs: Dict[str, Union[str, CallableT]]) -> None:
+def wrap_len(attrs: Dict[str, Union[str, CallableT, property]]) -> None:
     def wrap_len(len_func: CallableT) -> CallableT:
         def __len__(self: Any) -> int:
             data_len_ptr = len_func(self)
@@ -212,7 +213,7 @@ class Class(Callable):
         return getattr(self, self.pointer_name)
 
     def create_pointer_class(self) -> None:
-        attrs: Dict[str, Union[str, CallableT]] = {}
+        attrs: Dict[str, Union[str, CallableT, property]] = {}
         for attr_name, attr in self.attrs.items():
             attr_path_and_name = getattr(attr, "path_and_name", None)
 
@@ -346,19 +347,23 @@ class Class(Callable):
 
     def add_path(
         self,
-        path: List[str],
+        path: Union[str, List[str]],
         index: int,
         return_type_name: Optional[str] = None,
+        framework_reference: Optional[ModuleType] = None,
+        is_static: bool = False,
     ) -> None:
 
         if index >= len(path) or path[index] in self.attrs:
             return
 
+        _path: List[str] = path.split(".") if isinstance(path, str) else path
+
         # stdlib
         from enum import Enum
         from enum import EnumMeta
 
-        attr_ref = getattr(self.object_ref, path[index])
+        attr_ref = getattr(self.object_ref, _path[index])
 
         class_is_enum = isinstance(self.object_ref, EnumMeta)
 
@@ -368,36 +373,35 @@ class Class(Callable):
             or inspect.ismethod(attr_ref)
             or inspect.ismethoddescriptor(attr_ref)
         ):
-            super().add_path(path, index, return_type_name)
+            super().add_path(_path, index, return_type_name)
         if isinstance(attr_ref, Enum) and class_is_enum:
             enum_attribute = ast.enum.EnumAttribute(
-                path_and_name=".".join(path[: index + 1]),
+                path_and_name=".".join(_path[: index + 1]),
                 return_type_name=return_type_name,
                 client=self.client,
                 parent=self,
             )
-            setattr(self, path[index], enum_attribute)
-            self.attrs[path[index]] = enum_attribute
+            setattr(self, _path[index], enum_attribute)
+            self.attrs[_path[index]] = enum_attribute
 
         elif inspect.isdatadescriptor(attr_ref) or inspect.isgetsetdescriptor(attr_ref):
-            self.attrs[path[index]] = ast.property.Property(
-                path_and_name=".".join(path[: index + 1]),
+            self.attrs[_path[index]] = ast.property.Property(
+                path_and_name=".".join(_path[: index + 1]),
                 object_ref=attr_ref,
                 return_type_name=return_type_name,
                 client=self.client,
             )
         elif not callable(attr_ref):
             static_attribute = ast.static_attr.StaticAttribute(
-                path_and_name=".".join(path[: index + 1]),
+                path_and_name=".".join(_path[: index + 1]),
                 return_type_name=return_type_name,
                 client=self.client,
                 parent=self,
             )
-            setattr(self, path[index], static_attribute)
-            self.attrs[path[index]] = static_attribute
+            setattr(self, _path[index], static_attribute)
+            self.attrs[_path[index]] = static_attribute
 
-    def __getattribute__(self, item):
-
+    def __getattribute__(self, item: str) -> Any:
         try:
             target_object = super().__getattribute__(item)
 
@@ -415,11 +419,11 @@ class Class(Callable):
             print(e)
             raise e
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         attrs = super().__getattribute__("attrs")
         return attrs[item] if item in attrs else None
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
         if hasattr(super(), "attrs"):
             attrs = super().__getattribute__("attrs")
             if key in attrs:

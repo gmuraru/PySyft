@@ -4,8 +4,8 @@ from typing import Callable as CallableT
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Union
+from types import ModuleType
 
 # syft relative
 from .. import ast
@@ -18,6 +18,7 @@ class Attribute:
         "attrs",
         "return_type_name",
         "client",
+        "lookup_cache",
     ]
 
     def __init__(
@@ -34,9 +35,13 @@ class Attribute:
 
         self.return_type_name = return_type_name
         self.client = client
+        self.lookup_cache: Dict[Any, Any] = {}
 
     def __call__(
-        self, *args: Tuple[Any, ...], **kwargs: Any
+        self,
+        path: Union[List[str], str],
+        index: int = 0,
+        obj_type: Optional[type] = None,
     ) -> Optional[Union[Any, CallableT]]:
         raise NotImplementedError
 
@@ -109,5 +114,12 @@ class Attribute:
     def name(self) -> str:
         return self.path_and_name.rsplit(".", maxsplit=1)[-1]
 
-    def add_path(self, *args, **kwargs):
+    def add_path(
+        self,
+        path: Union[str, List[str]],
+        index: int,
+        return_type_name: Optional[str] = None,
+        framework_reference: Optional[ModuleType] = None,
+        is_static: bool = False,
+    ) -> None:
         raise NotImplementedError

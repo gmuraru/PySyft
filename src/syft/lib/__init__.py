@@ -5,6 +5,7 @@ from typing import Any
 from typing import Any as TypeAny
 from typing import Dict as TypeDict
 from typing import Optional
+from typing import Callable
 
 # third party
 from packaging import version
@@ -16,7 +17,7 @@ from ..lib.torch import create_torch_ast
 from ..lib.torchvision import create_torchvision_ast
 from .misc import create_union_ast
 
-registered_callbacks = {}
+registered_callbacks: TypeDict[str, Callable[[Any], Globals]] = {}
 
 
 class VendorLibraryImportException(Exception):

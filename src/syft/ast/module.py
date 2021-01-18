@@ -2,10 +2,11 @@
 import inspect
 from typing import Any
 from typing import Callable as CallableT
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Union
-from typing import Dict
+from types import ModuleType
 
 # syft relative
 from .. import ast
@@ -50,7 +51,7 @@ class Module(ast.attribute.Attribute):
         self,
         client: Optional[Any],
         path_and_name: Optional[str] = None,
-        object_ref: Optional[Union["ast.callable.Callable", CallableT]] = None,
+        object_ref: Optional[Union[CallableT, ModuleType]] = None,
         return_type_name: Optional[str] = None,
     ):
         super().__init__(
@@ -84,7 +85,7 @@ class Module(ast.attribute.Attribute):
 
     def __call__(
         self,
-        path: Optional[List[str]] = None,
+        path: Union[List[str], str],
         index: int = 0,
         obj_type: Optional[type] = None,
     ) -> Optional[Union[Callable, CallableT]]:
@@ -113,10 +114,11 @@ class Module(ast.attribute.Attribute):
 
     def add_path(
         self,
-        path: List[str],
-        index: int,
+        path: Union[str, List[str]],
+        index: int = 0,
         return_type_name: Optional[str] = None,
-        framework_reference: Optional[Union[Callable, CallableT]] = None,
+        framework_reference: Optional[ModuleType] = None,
+        is_static: bool = False,
     ) -> None:
         if index >= len(path):
             return
@@ -186,13 +188,13 @@ class Module(ast.attribute.Attribute):
 
         attr.add_path(path=path, index=index + 1, return_type_name=return_type_name)
 
-    def __getattribute__(self, item):
+    def __getattribute__(self, item: str) -> Any:
         target_object = super().__getattribute__(item)
         if isinstance(target_object, ast.static_attr.StaticAttribute):
             return target_object.get_remote_value()
         return target_object
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
         if hasattr(super(), "attrs"):
             attrs = super().__getattribute__("attrs")
             if key in attrs:

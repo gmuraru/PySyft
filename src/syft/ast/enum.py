@@ -5,6 +5,7 @@ from typing import Optional
 # syft relative
 from .. import ast
 from ..core.node.common.action.get_enum_attribute_action import EnumAttributeAction
+from ..core.common.pointer import AbstractPointer
 
 
 class EnumAttribute(ast.attribute.Attribute):
@@ -22,7 +23,7 @@ class EnumAttribute(ast.attribute.Attribute):
             client=client,
         )
 
-    def get_remote_enum_attribute(self):
+    def get_remote_enum_attribute(self) -> AbstractPointer:
         if self.path_and_name is None:
             raise ValueError("MAKE PROPER SCHEMA - Can't get enum attribute")
 

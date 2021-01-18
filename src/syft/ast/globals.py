@@ -3,6 +3,7 @@ from typing import Callable as CallableT
 from typing import List
 from typing import Optional
 from typing import Union
+from types import ModuleType
 
 # syft relative
 from .callable import Callable
@@ -14,8 +15,9 @@ class Globals(Module):
 
     def __call__(
         self,
-        path: Optional[List[str]] = None,
+        path: Union[List[str], str],
         index: int = 0,
+        obj_type: Optional[type] = None,
     ) -> Optional[Union[Callable, CallableT]]:
 
         _path: List[str] = (
@@ -32,7 +34,7 @@ class Globals(Module):
         path: Union[str, List[str]],
         index: int = 0,
         return_type_name: Optional[str] = None,
-        framework_reference: Optional[Union[Callable, CallableT]] = None,
+        framework_reference: Optional[ModuleType] = None,
         is_static: bool = False,
     ) -> None:
         if isinstance(path, str):

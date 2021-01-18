@@ -113,7 +113,6 @@ def create_python_ast(client: Optional[AbstractNodeClient] = None) -> Globals:
         ("syft.lib.python.List.extend", "syft.lib.python._SyNone"),
         ("syft.lib.python.List.__reversed__", "syft.lib.python.Iterator"),
         ("syft.lib.python.List.__delitem__", "syft.lib.python._SyNone"),
-        ("syft.lib.python.List.test", "syft.lib.python.Int"),
         # Bool methods - quite there
         ("syft.lib.python.Bool.__abs__", "syft.lib.python.Int"),
         ("syft.lib.python.Bool.__eq__", "syft.lib.python.Bool"),

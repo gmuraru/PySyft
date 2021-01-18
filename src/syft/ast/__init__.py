@@ -33,7 +33,6 @@ def add_modules(
             target_module, ref = mod
         else:
             target_module = mod
-            ref = None
         parent = get_parent(target_module, ast)
         attr_name = target_module.rsplit(".", 1)[-1]
         parent.add_attr(

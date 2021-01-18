@@ -13,6 +13,7 @@ from ..core.node.common.action.get_or_set_static_attribute_action import (
 from ..core.node.common.action.get_or_set_static_attribute_action import (
     StaticAttributeAction,
 )
+from ..core.common.pointer import AbstractPointer
 
 
 class StaticAttribute(ast.attribute.Attribute):
@@ -32,7 +33,7 @@ class StaticAttribute(ast.attribute.Attribute):
             client=client,
         )
 
-    def get_remote_value(self):
+    def get_remote_value(self) -> AbstractPointer:
         if self.path_and_name is None:
             raise ValueError("MAKE PROPER SCHEMA - Can't get static_attribute")
 
@@ -51,13 +52,13 @@ class StaticAttribute(ast.attribute.Attribute):
         self.client.send_immediate_msg_without_reply(msg=msg)
         return ptr
 
-    def solve_get_value(self):
+    def solve_get_value(self) -> Any:
         return getattr(self.parent.object_ref, self.path_and_name.rsplit(".")[-1])
 
-    def solve_set_value(self, set_value):
+    def solve_set_value(self, set_value: Any) -> None:
         setattr(self.parent.object_ref, self.path_and_name.rsplit(".")[-1], set_value)
 
-    def set_remote_value(self, set_arg: Any):
+    def set_remote_value(self, set_arg: Any) -> None:
         resolved_pointer_type = self.client.lib_ast.query(self.return_type_name)
         result = resolved_pointer_type.pointer_type(client=self.client)
         result_id_at_location = getattr(result, "id_at_location", None)
@@ -77,7 +78,7 @@ class StaticAttribute(ast.attribute.Attribute):
 
     def __call__(
         self, action: StaticAttributeAction
-    ) -> Optional[Union["Callable", CallableT]]:
+    ) -> Optional[Union["ast.callable.Callable", CallableT]]:
         raise ValueError("MAKE PROPER SCHEMA, THIS SHOULD NEVER BE CALLED")
 
     def add_path(self, *args, **kwargs):

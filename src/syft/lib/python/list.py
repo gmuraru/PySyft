@@ -17,7 +17,6 @@ from ...core.store.storeable_object import StorableObject
 from ...decorators import syft_decorator
 from ...proto.lib.python.list_pb2 import List as List_PB
 from ...util import aggressive_set_attr
-from .int import Int
 from .iterator import Iterator
 from .none import SyNone
 from .primitive_factory import PrimitiveFactory
@@ -43,10 +42,6 @@ class List(UserList, PyPrimitive):
 
         self._id: UID = id if id else UID()
         self._index = 0
-
-    @staticmethod
-    def test():
-        return 0
 
     @property
     def id(self) -> UID:

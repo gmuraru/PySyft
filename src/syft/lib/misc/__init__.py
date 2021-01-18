@@ -67,7 +67,9 @@ def get_allowed_functions(
     return allowed_functions
 
 
-def create_union_ast(lib_ast: globals.Globals, client=None) -> globals.Globals:
+def create_union_ast(
+    lib_ast: globals.Globals, client: TypeAny = None
+) -> globals.Globals:
     ast = globals.Globals(client)
 
     modules = ["syft", "syft.lib", "syft.lib.misc", "syft.lib.misc.union"]

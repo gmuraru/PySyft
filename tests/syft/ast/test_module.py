@@ -1,37 +1,36 @@
 # stdlib
 from enum import Enum
+from typing import Any
 
-global_value = 5
+global_value: int = 5
 
 
-def global_func():
+def global_function() -> int:
     return global_value
 
 
 class A:
     __slots__ = ["_private_attr"]
 
-    def __init__(self):
-        self._private_attr = 5.5
+    static_attr: int = 4
 
-    def test_method(self):
+    def __init__(self) -> None:
+        self._private_attr: float = 5.5
+
+    def test_method(self) -> int:
         return 0
 
     @property
-    def test_property(self):
+    def test_property(self) -> float:
         return self._private_attr
 
     @test_property.setter
-    def test_property(self, value):
-        self._test_property = value
+    def test_property(self, value: Any) -> None:
+        self._private_attr = value
 
     @staticmethod
-    def static_method():
+    def static_method() -> bool:
         return True
-
-    @classmethod
-    def class_method(cls):
-        pass
 
 
 class B(Enum):

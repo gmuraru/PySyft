@@ -7,13 +7,16 @@ from importlib import reload
 
 # syft absolute
 import syft
-from syft import test_module
 from syft.ast.globals import Globals
+from syft.core.node.common.client import Client
 from syft.lib import create_lib_ast
 from syft.lib import registered_callbacks
 
+# syft relative
+from . import test_module
 
-def create_AST(client):
+
+def create_AST(client: Client) -> Globals:
     ast = Globals(client)
 
     methods = [
@@ -42,7 +45,7 @@ def create_AST(client):
     return ast
 
 
-def get_custom_client():
+def get_custom_client() -> Client:
     registered_callbacks["test_module"] = create_AST
     syft.lib_ast = create_lib_ast(None)
     alice = syft.VirtualMachine(name="alice")
@@ -50,7 +53,7 @@ def get_custom_client():
     return alice_client
 
 
-def test_method():
+def test_method() -> None:
     client = get_custom_client()
     a_ptr = client.test_module.A()
     result_ptr = a_ptr.test_method()
@@ -61,7 +64,7 @@ def test_method():
     assert result == result_ptr.get()
 
 
-def test_property_get():
+def test_property_get() -> None:
     client = get_custom_client()
     a_ptr = client.test_module.A()
     result_ptr = a_ptr.test_property
@@ -72,13 +75,13 @@ def test_property_get():
     assert result == result_ptr.get()
 
 
-def test_property_set():
+def test_property_set() -> None:
     value_to_set = 7.5
     client = get_custom_client()
 
     a_ptr = client.test_module.A()
     a_ptr.test_property = value_to_set
-    result_ptr = a_ptr.test_property
+    result_ptr = a_ptr.test_property  # type: ignore
 
     a = test_module.A()
     a.test_property = value_to_set
@@ -87,7 +90,7 @@ def test_property_set():
     assert result == result_ptr.get()
 
 
-def test_slot_get():
+def test_slot_get() -> None:
     client = get_custom_client()
 
     a_ptr = client.test_module.A()
@@ -99,7 +102,7 @@ def test_slot_get():
     assert result == result_ptr.get()
 
 
-def test_slot_set():
+def test_slot_set() -> None:
     value_to_set = 7.5
     client = get_custom_client()
 
@@ -111,28 +114,28 @@ def test_slot_set():
     a._private_attr = value_to_set
     result = a._private_attr
 
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore
 
 
-def test_global_function():
+def test_global_function() -> None:
     client = get_custom_client()
 
     result_ptr = client.test_module.global_function()
     result = test_module.global_function()
 
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore
 
 
-def test_global_attribute_get():
+def test_global_attribute_get() -> None:
     client = get_custom_client()
 
     result_ptr = client.test_module.global_value
     result = test_module.global_value
 
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore
 
 
-def test_global_attribute_set():
+def test_global_attribute_set() -> None:
     global test_module
 
     set_value = 5
@@ -140,7 +143,7 @@ def test_global_attribute_set():
 
     client.test_module.global_value = set_value
     result_ptr = client.test_module.global_value
-    sy_result = result_ptr.get()
+    sy_result = result_ptr.get()  # type: ignore
 
     test_module = reload(test_module)
     test_module.set_value = set_value
@@ -149,24 +152,24 @@ def test_global_attribute_set():
     assert local_result == sy_result
 
 
-def test_static_method():
+def test_static_method() -> None:
     client = get_custom_client()
 
     result_ptr = client.test_module.A.static_method()
     result = test_module.A.static_method()
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore
 
 
-def test_static_attribute_get():
+def test_static_attribute_get() -> None:
     client = get_custom_client()
 
     result_ptr = client.test_module.A.static_attr
     result = test_module.A.static_attr
 
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore
 
 
-def test_static_attribute_set():
+def test_static_attribute_set() -> None:
     value_to_set = 5
     client = get_custom_client()
 
@@ -176,13 +179,13 @@ def test_static_attribute_set():
     test_module.A.static_attr = value_to_set
     result = test_module.A.static_attr
 
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore
 
 
-def test_enum():
+def test_enum() -> None:
     client = get_custom_client()
 
     result_ptr = client.test_module.B.Car
     result = test_module.B.Car
 
-    assert result == result_ptr.get()
+    assert result == result_ptr.get()  # type: ignore

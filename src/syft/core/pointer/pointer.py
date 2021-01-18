@@ -138,19 +138,12 @@ class Pointer(AbstractPointer):
         tags: Optional[List[str]] = None,
         description: str = "",
     ) -> None:
-        if id_at_location is None:
-            id_at_location = UID()
-
-        if tags is None:
-            tags = []
-
-        self.client = client
-        self.id_at_location = id_at_location
-        self.tags = tags
-        self.description = description
-        self.gc_enabled = True
-
-        self.is_enum = False
+        super().__init__(
+            client=client,
+            id_at_location=id_at_location,
+            tags=tags,
+            description=description,
+        )
 
     def _get(self, delete_obj: bool = True, verbose: bool = False) -> StorableObject:
         """Method to download a remote object from a pointer object if you have the right

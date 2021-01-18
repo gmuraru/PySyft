@@ -12,9 +12,6 @@ from nacl.signing import VerifyKey
 # syft relative
 from ..... import lib
 from .....decorators.syft_decorator_impl import syft_decorator
-from .....proto.core.node.common.action.get_set_property_pb2 import (
-    GetOrSetPropertyAction as GetOrSetPropertyAction_PB,
-)
 from .....proto.core.node.common.action.get_set_static_attribute_pb2 import (
     GetSetStaticAttributeAction as GetSetStaticAttributeAction_PB,
 )
