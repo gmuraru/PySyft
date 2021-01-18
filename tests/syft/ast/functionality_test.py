@@ -2,6 +2,9 @@
 The following test suit serves as a set of examples of how to integrate different classes
 into our AST and use them.
 """
+# stdlib
+from importlib import reload
+
 # syft absolute
 import syft
 from syft import test_module
@@ -21,8 +24,8 @@ def create_AST(client):
         ("test_module.A.static_method", "syft.lib.python.Float"),
         ("test_module.A.static_attr", "syft.lib.python.Int"),
         ("test_module.B.Car", "test_module.B"),
-        # ("test_module.global_value", "syft.lib.python.Int"),
-        # ("test_module.global_function", "syft.lib.python.Int"),
+        ("test_module.global_value", "syft.lib.python.Int"),
+        ("test_module.global_function", "syft.lib.python.Int"),
     ]
 
     for method, return_type in methods:
@@ -114,8 +117,7 @@ def test_slot_set():
 def test_global_function():
     client = get_custom_client()
 
-    globals = client.test_module.globals
-    result_ptr = globals.global_function()
+    result_ptr = client.test_module.global_function()
     result = test_module.global_function()
 
     assert result == result_ptr.get()
@@ -131,12 +133,20 @@ def test_global_attribute_get():
 
 
 def test_global_attribute_set():
+    global test_module
+
+    set_value = 5
     client = get_custom_client()
 
-    result_ptr = client.test_module.globals.global_value
-    result = test_module.global_value
+    client.test_module.global_value = set_value
+    result_ptr = client.test_module.global_value
+    sy_result = result_ptr.get()
 
-    assert result == result_ptr.get()
+    test_module = reload(test_module)
+    test_module.set_value = set_value
+    local_result = test_module.global_value
+
+    assert local_result == sy_result
 
 
 def test_static_method():
@@ -145,7 +155,6 @@ def test_static_method():
     result_ptr = client.test_module.A.static_method()
     result = test_module.A.static_method()
     assert result == result_ptr.get()
-
 
 
 def test_static_attribute_get():
@@ -177,7 +186,3 @@ def test_enum():
     result = test_module.B.Car
 
     assert result == result_ptr.get()
-
-
-def test_dynamic_attribute():
-    pass

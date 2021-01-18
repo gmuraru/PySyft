@@ -10,6 +10,9 @@ from nacl.signing import VerifyKey
 # syft relative
 from ..... import lib
 from .....decorators.syft_decorator_impl import syft_decorator
+from .....proto.core.node.common.action.get_enum_attribute_pb2 import (
+    GetEnumAttributeAction as GetEnumAttributeAction_PB,
+)
 from ....common.serde.deserialize import _deserialize
 from ....common.uid import UID
 from ....io.address import Address
@@ -17,8 +20,7 @@ from ....store.storeable_object import StorableObject
 from ...abstract.node import AbstractNode
 from .common import ImmediateActionWithoutReply
 from .run_class_method_action import RunClassMethodAction
-from .....proto.core.node.common.action.get_enum_attribute_pb2 import GetEnumAttributeAction as \
-    GetEnumAttributeAction_PB
+
 
 class EnumAttributeAction(ImmediateActionWithoutReply):
     def __init__(
@@ -40,8 +42,9 @@ class EnumAttributeAction(ImmediateActionWithoutReply):
     def execute_action(self, node: AbstractNode, verify_key) -> None:
         enum_attribute = node.lib_ast.query(self.path)
         result = enum_attribute.solve_get_enum_attribute().value
-        result = lib.python.primitive_factory.PrimitiveFactory.generate_primitive(value=result,
-                                                                          id=self.id_at_location)
+        result = lib.python.primitive_factory.PrimitiveFactory.generate_primitive(
+            value=result, id=self.id_at_location
+        )
 
         result = StorableObject(
             id=self.id_at_location,

@@ -356,7 +356,8 @@ class Class(Callable):
             return
 
         # stdlib
-        from enum import Enum, EnumMeta
+        from enum import Enum
+        from enum import EnumMeta
 
         attr_ref = getattr(self.object_ref, path[index])
 

@@ -168,13 +168,17 @@ class Module(ast.attribute.Attribute):
         attr.add_path(path=path, index=index + 1, return_type_name=return_type_name)
 
     def __getattribute__(self, item):
+        target_object = super().__getattribute__(item)
+        if isinstance(target_object, ast.static_attr.StaticAttribute):
+            return target_object.get_remote_value()
+        return target_object
 
-        try:
-            target_object = super().__getattribute__(item)
-            if isinstance(target_object, ast.static_attr.StaticAttribute):
-                return target_object.get_remote_value()
-            return target_object
-        except Exception as e:
-            print("IN CRUCEA MATII")
-            print(e)
-            raise e
+    def __setattr__(self, key, value):
+        if hasattr(super(), "attrs"):
+            attrs = super().__getattribute__("attrs")
+            if key in attrs:
+                target_object = self.attrs[key]
+                if isinstance(target_object, ast.static_attr.StaticAttribute):
+                    return target_object.set_remote_value(value)
+
+        return super().__setattr__(key, value)

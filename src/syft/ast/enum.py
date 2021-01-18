@@ -48,4 +48,3 @@ class EnumAttribute(ast.attribute.Attribute):
 
     def add_path(self, *args, **kwargs) -> None:
         raise ValueError("MAKE PROPER SCHEMA")
-
