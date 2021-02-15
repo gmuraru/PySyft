@@ -26,6 +26,7 @@ class GarbageCollectObjectAction(EventualActionWithoutReply):
         self.id_at_location = id_at_location
 
     def execute_action(self, node: AbstractNode, verify_key: VerifyKey) -> None:
+        """
         try:
             node.store.delete(key=self.id_at_location)
         except Exception as e:
@@ -33,6 +34,7 @@ class GarbageCollectObjectAction(EventualActionWithoutReply):
                 "> GarbageCollectObjectAction deletion exception "
                 + f"{self.id_at_location} {e}"
             )
+        """
 
     @syft_decorator(typechecking=True)
     def _object2proto(self) -> GarbageCollectObjectAction_PB:
