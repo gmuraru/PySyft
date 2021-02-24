@@ -33,8 +33,17 @@ def create_ast(client: TypeAny = None) -> Globals:
         ("sympc.tensor", sympc.tensor),
         ("sympc.protocol", sympc.protocol),
         ("sympc.store", sympc.store),
+        ("sympc.utils", sympc.utils),
         ("sympc.protocol.spdz", sympc.protocol.spdz),
         ("sympc.protocol.spdz.spdz", sympc.protocol.spdz.spdz),
+        ("sympc.protocol.securenn", sympc.protocol.securenn),
+        ("sympc.protocol.securenn.SecureNN", sympc.protocol.securenn.SecureNN),
+        ("sympc.protocol.aby3", sympc.protocol.aby3),
+        ("sympc.protocol.aby3.aby3", sympc.protocol.aby3.aby3),
+        ("sympc.protocol.aby3.aby3.ABY3", sympc.protocol.aby3.aby3.ABY3),
+        ("sympc.protocol.combo", sympc.protocol.combo),
+        ("sympc.protocol.combo.combo", sympc.protocol.combo.combo),
+        ("sympc.protocol.combo.combo.Combo", sympc.protocol.combo.combo.Combo),
     ]
 
     classes: TypeList[TypeTuple[str, str, TypeAny]] = [
@@ -57,11 +66,27 @@ def create_ast(client: TypeAny = None) -> Globals:
             "sympc.tensor.ShareTensor",
         ),
         (
-            "sympc.session.Session.populate_crypto_store",
+            "sympc.store.CryptoStore.populate_store",
             "syft.lib.python._SyNone",
         ),
         (
-            "sympc.session.get_generator",
+            "sympc.protocol.combo.combo.Combo.msb",
+            "sympc.tensor.ShareTensor",
+        ),
+        (
+            "sympc.protocol.aby3.aby3.ABY3.sum_shares",
+            "syft.lib.python.List",
+        ),
+        (
+            "sympc.protocol.combo.combo.Combo.wrap",
+            "sympc.tensor.ShareTensor",
+        ),
+        (
+            "sympc.session.Session.przs_generate_random_share",
+            "sympc.tensor.ShareTensor",
+        ),
+        (
+            "sympc.utils.get_new_generator",
             "torch.Generator",
         ),
         (
@@ -91,6 +116,16 @@ def create_ast(client: TypeAny = None) -> Globals:
         (
             "sympc.tensor.ShareTensor.__rmatmul__",
             "sympc.tensor.ShareTensor",
+        ),
+
+        # Methods to be applid on the underlying ShareTensor
+        (
+            "sympc.tensor.ShareTensor.unsqueeze",
+            "sympc.tensor.ShareTensor",
+        ),
+        (
+            "sympc.tensor.ShareTensor.shape",
+            "torch.Tensor",
         ),
     ]
 
