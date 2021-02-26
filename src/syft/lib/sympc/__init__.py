@@ -41,9 +41,6 @@ def create_ast(client: TypeAny = None) -> Globals:
         ("sympc.protocol.aby3", sympc.protocol.aby3),
         ("sympc.protocol.aby3.aby3", sympc.protocol.aby3.aby3),
         ("sympc.protocol.aby3.aby3.ABY3", sympc.protocol.aby3.aby3.ABY3),
-        ("sympc.protocol.combo", sympc.protocol.combo),
-        ("sympc.protocol.combo.combo", sympc.protocol.combo.combo),
-        ("sympc.protocol.combo.combo.Combo", sympc.protocol.combo.combo.Combo),
     ]
 
     classes: TypeList[TypeTuple[str, str, TypeAny]] = [
@@ -70,16 +67,8 @@ def create_ast(client: TypeAny = None) -> Globals:
             "syft.lib.python._SyNone",
         ),
         (
-            "sympc.protocol.combo.combo.Combo.msb",
-            "sympc.tensor.ShareTensor",
-        ),
-        (
             "sympc.protocol.aby3.aby3.ABY3.sum_shares",
             "syft.lib.python.List",
-        ),
-        (
-            "sympc.protocol.combo.combo.Combo.wrap",
-            "sympc.tensor.ShareTensor",
         ),
         (
             "sympc.session.Session.przs_generate_random_share",
@@ -115,6 +104,12 @@ def create_ast(client: TypeAny = None) -> Globals:
         ),
         (
             "sympc.tensor.ShareTensor.__rmatmul__",
+            "sympc.tensor.ShareTensor",
+        ),
+
+        # Meant to be used on Binary Shared Secrets
+        (
+            "sympc.tensor.ShareTensor.__xor__",
             "sympc.tensor.ShareTensor",
         ),
 
